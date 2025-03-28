@@ -1,0 +1,14 @@
+[project]
+name = "whisper-dictation"
+version = "0.1.0"
+dependencies = [
+    "faster-whisper",
+    "sounddevice",
+    "soundfile",
+    "pyautogui",
+    "pystray",
+    "pillow",
+    "numpy",
+    "openai",
+    "pynput"
+]

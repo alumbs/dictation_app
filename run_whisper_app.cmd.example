@@ -1,0 +1,5 @@
+@echo off
+call whisper-env\Scripts\activate.bat
+set OPENAI_API_KEY=sk-proj...
+python whisper_dictation_app.py
+pause

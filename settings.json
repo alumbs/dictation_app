@@ -1,0 +1,11 @@
+{
+    "hotkey": "ctrl+shift+space",
+"hotkey_note": "ctrl+shift+1",
+"hotkey_email": "ctrl+shift+2",
+"hotkey_message": "ctrl+shift+3",
+"hotkey_popup": "ctrl+shift+4",
+"hotkey_cursor": "ctrl+shift+5",
+"hotkey_gpt": "ctrl+shift+6",
+"hotkey_toggle_continuous": "ctrl+shift+0"
+
+}
