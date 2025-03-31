@@ -42,7 +42,7 @@ settings = {
     "output_method": "cursor",
     "recording_duration": 60,
     "use_gpt_cleanup": False,
-    "transcription_method": "local"  # or "openai"
+    "transcription_method": "remote"  # local or remote or "openai"
 }
 
 SETTINGS_FILE = "settings.json"
@@ -159,20 +159,68 @@ def record_audio(duration=10, samplerate=16000):
     audio_np = np.concatenate(audio, axis=0)
     return audio_np.flatten()
 
-# --- Transcription ---
-def transcribe(audio_data=None, samplerate=16000, file_path=None):
-    if settings.get("transcription_method") == "openai":
-        return transcribe_with_openai(audio_data, samplerate)
-
-    if file_path:
-        segments, _ = model.transcribe(file_path)
-    else:
+def transcribe_remote(audio_data, samplerate=16000):
+    try:
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
             temp_path = f.name
         sf.write(temp_path, audio_data, samplerate)
-        segments, _ = model.transcribe(temp_path)
+
+        with open(temp_path, "rb") as f:
+            files = {'file': ('audio.wav', f, 'audio/wav')}
+            response = requests.post(f"{settings['hosted_transcription_server']}/transcribe", files=files)
+
         os.unlink(temp_path)
-    return " ".join([seg.text for seg in segments])
+
+        if response.ok:
+            result = response.json()
+            return result.get("text") or "[No transcription returned]"
+        else:
+            return f"[Remote Transcription Error] {response.status_code}: {response.text}"
+
+    except Exception as e:
+        return f"[Remote Transcription Exception] {e}"
+
+
+# --- Transcription ---
+def transcribe(audio_data=None, samplerate=16000, file_path=None):
+    method = settings.get("transcription_method", "local")
+
+    # --- Remote First ---
+    if method == "remote":
+        try:
+            result = transcribe_remote(audio_data, samplerate)
+            if result and not result.startswith("[Remote Transcription Error"):
+                return result
+            else:
+                print("[Fallback] Remote failed, trying local...")
+        except Exception as e:
+            print(f"[Remote Exception] {e} — falling back to local...")
+
+    # --- Local Fallback ---
+    try:
+        if file_path:
+            segments, _ = model.transcribe(file_path)
+        else:
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                temp_path = f.name
+            sf.write(temp_path, audio_data, samplerate)
+            segments, _ = model.transcribe(temp_path)
+            os.unlink(temp_path)
+
+        text = " ".join([seg.text for seg in segments])
+        if text.strip():
+            return text
+        else:
+            print("[Fallback] Local model returned empty — trying OpenAI...")
+    except Exception as e:
+        print(f"[Local Exception] {e} — trying OpenAI...")
+
+    # --- OpenAI Last ---
+    try:
+        return transcribe_with_openai(audio_data, samplerate)
+    except Exception as e:
+        return f"[OpenAI Transcription Failed] {e}"
+
 
 
 # --- Text Cleanup ---

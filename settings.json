@@ -6,6 +6,7 @@
 "hotkey_popup": "ctrl+shift+4",
 "hotkey_cursor": "ctrl+shift+5",
 "hotkey_gpt": "ctrl+shift+6",
-"hotkey_toggle_continuous": "ctrl+shift+0"
+"hotkey_toggle_continuous": "ctrl+shift+0",
+"hosted_transcription_server": "http://w4cc8sgwgksskkw8ogwc0w0s.37.27.189.252.sslip.io"
 
 }
